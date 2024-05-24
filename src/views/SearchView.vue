@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SearchForm from '../components/SearchForm.vue'
 import SelectLimit from '../components/SelectLimit.vue'
@@ -115,6 +115,12 @@ function setPageNumber(value: number) {
   router.push({ query: updateQueryParams(route.query, 'page', value.toString()) })
   getData()
 }
+
+watch([paginationButtonsValue, totalPages], () => {
+  console.log(paginationButtonsValueComputed.value)
+  console.log(totalPages.value)
+  console.log(totalPages.value > paginationButtonsValueComputed.value.length)
+})
 </script>
 
 <template>

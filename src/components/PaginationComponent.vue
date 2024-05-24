@@ -33,7 +33,7 @@ defineEmits([
     </button>
 
     <button
-      v-if="totalPages > paginationButtonsValue.length"
+      v-if="totalPages > paginationButtonsValue[paginationButtonsValue.length - 1] + 1"
       className="w-14 h-14  text-4xl p-3 rounded-full text-white font-extrabold"
       @click="$emit('change-pagination-buttons-value')"
     >
