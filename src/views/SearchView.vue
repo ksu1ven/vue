@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, onErrorCaptured } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SearchForm from '../components/SearchForm.vue'
 import SelectLimit from '../components/SelectLimit.vue'
@@ -13,15 +13,22 @@ const router = useRouter()
 const route = useRoute()
 
 const loading = ref(false)
+
 const searchValue = ref(localStorage.getItem('searchValue') || '')
 const pageNumber = ref(route.query.page ? Number(route.query.page) - 1 : 0)
 const pageSize = ref(Number(route.query.limit) || 10)
 const totalPages = ref(0)
 
 const searchResultsArray = ref<Readonly<Animal[]>>([])
+
 const errorOccured = ref(false)
 
-async function getData() {
+onErrorCaptured(() => {
+  errorOccured.value = true
+  return false
+})
+
+const getData = async () => {
   loading.value = true
   localStorage.setItem('searchValue', searchValue.value)
   const url = `https://stapi.co/api/v1/rest/animal/search?pageNumber=${pageNumber.value}&pageSize=${pageSize.value}`
@@ -46,7 +53,7 @@ async function getData() {
 }
 getData()
 
-function submitFromChangeLimit(param: string, value: string) {
+const submitFromChangeLimit = (param: string, value: string) => {
   if (pageNumber.value) pageNumber.value = 0
   router.push({
     query: updateQueryParams(route.query, param, value)
@@ -54,15 +61,29 @@ function submitFromChangeLimit(param: string, value: string) {
   getData()
 }
 
-function setNewPageNumber(number: number) {
+const setNewPageNumber = (number: number) => {
   pageNumber.value = number - 1
   router.push({ query: updateQueryParams(route.query, 'page', number.toString()) })
   getData()
 }
+
+const removeError = () => {
+  errorOccured.value = false
+}
 </script>
 
 <template>
-  <main className="relative min-h-screen flex flex-col grow">
+  <main v-if="errorOccured" className="error-occured min-h-screen grid place-content-center grow">
+    <h2 className="text-3xl">Hello, I&apos;m Error! I was catched :&#40;</h2>
+    <button
+      type="button"
+      className="w-fit bg-lime-700 py-3 px-10 mt-10 rounded text-white font-extrabold m-auto"
+      @click="removeError"
+    >
+      Try again
+    </button>
+  </main>
+  <main v-else className="relative min-h-screen flex flex-col grow">
     <section className="bg-lime-200 py-10">
       <SearchForm v-model="searchValue" @submit-form="submitFromChangeLimit" />
     </section>

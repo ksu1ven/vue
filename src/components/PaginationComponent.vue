@@ -22,7 +22,7 @@ const paginationButtonsValueComputed = computed(() => {
   return paginationButtonsValue.value.filter((value) => props.totalPages > value)
 })
 
-function changePaginationButtonsValue() {
+const changePaginationButtonsValue = () => {
   if (
     props.totalPages - paginationButtonsValue.value[paginationButtonsValue.value.length - 1] <=
     1
@@ -41,7 +41,7 @@ function changePaginationButtonsValue() {
   emit('set-new-page-number', newPageNumber)
 }
 
-function clickNextPrevButton(direction: 'next' | 'prev') {
+const clickNextPrevButton = (direction: 'next' | 'prev') => {
   const increaseDecreaseNumber = direction == 'next' ? 1 : -1
   const newPageNumber = props.pageNumber + increaseDecreaseNumber + 1
 
@@ -53,7 +53,7 @@ function clickNextPrevButton(direction: 'next' | 'prev') {
   emit('set-new-page-number', newPageNumber)
 }
 
-function clickLastPage() {
+const clickLastPage = () => {
   if (props.totalPages > paginationButtonsValue.value.length)
     paginationButtonsValue.value = paginationButtonsValue.value.map(
       (el, ind) => props.totalPages - paginationButtonsValue.value.length + ind + el - el
@@ -61,7 +61,7 @@ function clickLastPage() {
   emit('set-new-page-number', props.totalPages)
 }
 
-function setPageNumber(value: number) {
+const setPageNumber = (value: number) => {
   emit('set-new-page-number', value)
 }
 </script>
