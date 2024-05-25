@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import pawImg from '../assets/paw.png'
 import type { Animal } from '@/utils/types'
+import { useRoute, useRouter } from 'vue-router'
+import { updateQueryParams } from '@/utils/helpFunctions'
+
 defineProps<{
   searchResultsArray: Readonly<Animal[]>
 }>()
 
-function checkDescription(animal: Animal) {
+const router = useRouter()
+const route = useRoute()
+
+const checkDescription = (animal: Animal) => {
   const descriptionArr: string[] = []
   Object.entries(animal).forEach((el) => {
     if (el[1] === true) {
@@ -21,6 +27,7 @@ function checkDescription(animal: Animal) {
       v-for="animal in searchResultsArray"
       :key="animal.uid"
       className="flex justify-between gap-5 cursor-pointer"
+      @click="router.push({ query: updateQueryParams(route.query, 'details', animal.name) })"
     >
       <img :src="pawImg" alt="animal picture" className="w-16 h-16" />
       <div className="grow">

@@ -23,7 +23,8 @@ const searchResultsArray = ref<Readonly<Animal[]>>([])
 
 const errorOccured = ref(false)
 
-onErrorCaptured(() => {
+onErrorCaptured((err) => {
+  console.log(err)
   errorOccured.value = true
   return false
 })
@@ -102,4 +103,5 @@ const removeError = () => {
       />
     </section>
   </main>
+  <router-view />
 </template>
