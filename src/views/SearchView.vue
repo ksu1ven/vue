@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SearchForm from '../components/SearchForm.vue'
 import SelectLimit from '../components/SelectLimit.vue'
@@ -17,21 +17,11 @@ const searchValue = ref(localStorage.getItem('searchValue') || '')
 const pageNumber = ref(route.query.page ? Number(route.query.page) - 1 : 0)
 const pageSize = ref(Number(route.query.limit) || 10)
 const totalPages = ref(0)
-const paginationButtonsValue = ref(
-  pageNumber.value > 2
-    ? [1, 2, 3].map((el, ind) => pageNumber.value + ind - 1 + el - el)
-    : [1, 2, 3]
-)
-
-const paginationButtonsValueComputed = computed(() => {
-  return paginationButtonsValue.value.filter((value) => totalPages.value > value)
-})
 
 const searchResultsArray = ref<Readonly<Animal[]>>([])
 const errorOccured = ref(false)
 
 async function getData() {
-  console.log('getData')
   loading.value = true
   localStorage.setItem('searchValue', searchValue.value)
   const url = `https://stapi.co/api/v1/rest/animal/search?pageNumber=${pageNumber.value}&pageSize=${pageSize.value}`
@@ -56,8 +46,7 @@ async function getData() {
 }
 getData()
 
-function searchAnimals(param: string, value: string) {
-  paginationButtonsValue.value = [1, 2, 3]
+function submitFromChangeLimit(param: string, value: string) {
   if (pageNumber.value) pageNumber.value = 0
   router.push({
     query: updateQueryParams(route.query, param, value)
@@ -65,72 +54,21 @@ function searchAnimals(param: string, value: string) {
   getData()
 }
 
-function changePaginationButtonsValue() {
-  if (
-    totalPages.value - paginationButtonsValue.value[paginationButtonsValue.value.length - 1] <=
-    1
-  ) {
-    return
-  }
-  const increaseNumber =
-    totalPages.value - paginationButtonsValue.value[paginationButtonsValue.value.length - 1] <
-    paginationButtonsValue.value.length
-      ? 1
-      : paginationButtonsValue.value.length
-  console.log(increaseNumber)
-
-  paginationButtonsValue.value = paginationButtonsValue.value.map((el) => el + increaseNumber)
-
-  const newPageNumber = paginationButtonsValue.value.at(-1) || 3 + increaseNumber
-  router.push({ query: updateQueryParams(route.query, 'page', newPageNumber.toString()) })
-  pageNumber.value = newPageNumber - 1
+function setNewPageNumber(number: number) {
+  pageNumber.value = number - 1
+  router.push({ query: updateQueryParams(route.query, 'page', number.toString()) })
   getData()
 }
-
-function clickNextPrevButton(direction: 'next' | 'prev') {
-  const increaseDecreaseNumber = direction == 'next' ? 1 : -1
-  const newPageNumber = pageNumber.value + increaseDecreaseNumber + 1
-  pageNumber.value = newPageNumber - 1
-  router.push({ query: updateQueryParams(route.query, 'page', newPageNumber.toString()) })
-
-  if (!paginationButtonsValue.value.includes(newPageNumber)) {
-    const changedArr = paginationButtonsValue.value.map((el) => el + increaseDecreaseNumber)
-    paginationButtonsValue.value = changedArr
-  }
-  getData()
-}
-
-function clickLastPage() {
-  if (totalPages.value > paginationButtonsValue.value.length)
-    paginationButtonsValue.value = paginationButtonsValue.value.map(
-      (el, ind) => totalPages.value - paginationButtonsValue.value.length + ind + el - el
-    )
-  pageNumber.value = totalPages.value - 1
-  router.push({ query: updateQueryParams(route.query, 'page', totalPages.value.toString()) })
-  getData()
-}
-
-function setPageNumber(value: number) {
-  pageNumber.value = value - 1
-  router.push({ query: updateQueryParams(route.query, 'page', value.toString()) })
-  getData()
-}
-
-watch([paginationButtonsValue, totalPages], () => {
-  console.log(paginationButtonsValueComputed.value)
-  console.log(totalPages.value)
-  console.log(totalPages.value > paginationButtonsValueComputed.value.length)
-})
 </script>
 
 <template>
   <main className="relative min-h-screen flex flex-col grow">
     <section className="bg-lime-200 py-10">
-      <SearchForm v-model="searchValue" @submit-form="searchAnimals" />
+      <SearchForm v-model="searchValue" @submit-form="submitFromChangeLimit" />
     </section>
     <section className="search-results grow">
       <DataLoader v-show="loading" />
-      <SelectLimit v-show="!loading" v-model="pageSize" @change-limit="searchAnimals" />
+      <SelectLimit v-show="!loading" v-model="pageSize" @change-limit="submitFromChangeLimit" />
 
       <SearchResults v-show="!loading" :searchResultsArray="searchResultsArray" />
 
@@ -139,11 +77,7 @@ watch([paginationButtonsValue, totalPages], () => {
         v-if="totalPages"
         :pageNumber="pageNumber"
         :totalPages="totalPages"
-        :paginationButtonsValue="paginationButtonsValueComputed"
-        @click-last-page="clickLastPage"
-        @click-next-prev-button="clickNextPrevButton"
-        @change-pagination-buttons-value="changePaginationButtonsValue"
-        @set-page-number="setPageNumber"
+        @set-new-page-number="setNewPageNumber"
       />
     </section>
   </main>

@@ -1,15 +1,69 @@
 <script setup lang="ts">
-const { pageNumber, paginationButtonsValue, totalPages } = defineProps<{
-  paginationButtonsValue: number[]
+import { ref, computed, watch } from 'vue'
+const props = defineProps<{
   totalPages: number
   pageNumber: number
 }>()
-defineEmits([
-  'click-last-page',
-  'click-next-prev-button',
-  'change-pagination-buttons-value',
-  'set-page-number'
-])
+const emit = defineEmits(['set-new-page-number'])
+const paginationButtonsValue = ref<number[]>([])
+
+watch(
+  props,
+  () => {
+    paginationButtonsValue.value =
+      props.pageNumber > 2
+        ? [1, 2, 3].map((el, ind) => props.pageNumber + ind - 1 + el - el)
+        : [1, 2, 3]
+  },
+  { immediate: true }
+)
+
+const paginationButtonsValueComputed = computed(() => {
+  return paginationButtonsValue.value.filter((value) => props.totalPages > value)
+})
+
+function changePaginationButtonsValue() {
+  if (
+    props.totalPages - paginationButtonsValue.value[paginationButtonsValue.value.length - 1] <=
+    1
+  ) {
+    return
+  }
+  const increaseNumber =
+    props.totalPages - paginationButtonsValue.value[paginationButtonsValue.value.length - 1] <
+    paginationButtonsValue.value.length
+      ? 1
+      : paginationButtonsValue.value.length
+
+  paginationButtonsValue.value = paginationButtonsValue.value.map((el) => el + increaseNumber)
+
+  const newPageNumber = paginationButtonsValue.value.at(-1) || 3 + increaseNumber
+  emit('set-new-page-number', newPageNumber)
+}
+
+function clickNextPrevButton(direction: 'next' | 'prev') {
+  const increaseDecreaseNumber = direction == 'next' ? 1 : -1
+  const newPageNumber = props.pageNumber + increaseDecreaseNumber + 1
+
+  if (!paginationButtonsValue.value.includes(newPageNumber)) {
+    console.log('dont include')
+    const changedArr = paginationButtonsValue.value.map((el) => el + increaseDecreaseNumber)
+    paginationButtonsValue.value = changedArr
+  }
+  emit('set-new-page-number', newPageNumber)
+}
+
+function clickLastPage() {
+  if (props.totalPages > paginationButtonsValue.value.length)
+    paginationButtonsValue.value = paginationButtonsValue.value.map(
+      (el, ind) => props.totalPages - paginationButtonsValue.value.length + ind + el - el
+    )
+  emit('set-new-page-number', props.totalPages)
+}
+
+function setPageNumber(value: number) {
+  emit('set-new-page-number', value)
+}
 </script>
 
 <template>
@@ -17,25 +71,27 @@ defineEmits([
     <button
       className="w-14 h-14  text-4xl p-3 rounded-full text-white font-extrabold"
       :disabled="pageNumber - 1 < 0"
-      @click="$emit('click-next-prev-button', 'prev')"
+      @click="clickNextPrevButton('prev')"
     >
       {{ '<' }}
     </button>
 
     <button
-      v-for="value in paginationButtonsValue"
+      v-for="value in paginationButtonsValueComputed"
       :key="`button-${value}`"
       class="w-14 h-14 p-3 rounded-full text-white font-extrabold"
       :class="pageNumber + 1 === value ? 'bg-lime-300' : ' bg-lime-700'"
-      @click="$emit('set-page-number', value)"
+      @click="setPageNumber(value)"
     >
       {{ value }}
     </button>
 
     <button
-      v-if="totalPages > paginationButtonsValue[paginationButtonsValue.length - 1] + 1"
+      v-if="
+        totalPages > paginationButtonsValueComputed[paginationButtonsValueComputed.length - 1] + 1
+      "
       className="w-14 h-14  text-4xl p-3 rounded-full text-white font-extrabold"
-      @click="$emit('change-pagination-buttons-value')"
+      @click="changePaginationButtonsValue()"
     >
       ...
     </button>
@@ -43,14 +99,14 @@ defineEmits([
     <button
       class="w-14 h-14 p-3 rounded-full text-white font-extrabold"
       :class="pageNumber + 1 === totalPages ? 'bg-lime-300' : ' bg-lime-700'"
-      @click="$emit('click-last-page')"
+      @click="clickLastPage()"
     >
       {{ totalPages }}
     </button>
     <button
       className="w-14 h-14 text-4xl p-3 rounded-full text-white font-extrabold"
       :disabled="pageNumber + 1 > totalPages - 1"
-      @click="$emit('click-next-prev-button', 'next')"
+      @click="clickNextPrevButton('next')"
     >
       {{ '>' }}
     </button>
