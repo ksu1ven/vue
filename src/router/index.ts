@@ -18,7 +18,7 @@ const router = createRouter({
       ]
     },
     {
-      path: '/:any',
+      path: '/*',
       name: 'error',
       component: ErrorView
     }

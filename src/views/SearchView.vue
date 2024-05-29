@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onErrorCaptured } from 'vue'
+import { ref, onErrorCaptured, onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SearchForm from '../components/SearchForm.vue'
 import SelectLimit from '../components/SelectLimit.vue'
@@ -52,7 +52,7 @@ const getData = async () => {
     errorOccured.value = true
   }
 }
-getData()
+onBeforeMount(getData)
 
 const submitFromChangeLimit = (param: string, value: string) => {
   if (pageNumber.value) pageNumber.value = 0
