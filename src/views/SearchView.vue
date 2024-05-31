@@ -24,84 +24,88 @@ const searchResultsArray = ref<Readonly<Animal[]>>([])
 const errorOccured = ref(false)
 
 onErrorCaptured((err) => {
-  console.log(err)
-  errorOccured.value = true
-  return false
+	console.log(err)
+	errorOccured.value = true
+	return false
 })
 
 const getData = async () => {
-  loading.value = true
-  localStorage.setItem('searchValue', searchValue.value)
-  const url = `https://stapi.co/api/v1/rest/animal/search?pageNumber=${pageNumber.value}&pageSize=${pageSize.value}`
-  try {
-    const response = searchValue.value
-      ? await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `${encodeURIComponent('name')}=${encodeURIComponent(searchValue.value)}`
-        })
-      : await fetch(url, {
-          method: 'GET'
-        })
+	loading.value = true
+	localStorage.setItem('searchValue', searchValue.value)
+	const url = `https://stapi.co/api/v1/rest/animal/search?pageNumber=${pageNumber.value}&pageSize=${pageSize.value}`
+	try {
+		const response = searchValue.value
+			? await fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: `${encodeURIComponent('name')}=${encodeURIComponent(searchValue.value)}`
+				})
+			: await fetch(url, {
+					method: 'GET'
+				})
 
-    const json: apiResponse = await response.json()
-    totalPages.value = json.page.totalPages
-    loading.value = false
-    searchResultsArray.value = json.animals
-  } catch {
-    errorOccured.value = true
-  }
+		const json: apiResponse = await response.json()
+		totalPages.value = json.page.totalPages
+		loading.value = false
+		searchResultsArray.value = json.animals
+	} catch {
+		errorOccured.value = true
+	}
 }
 onBeforeMount(getData)
 
 const submitFromChangeLimit = (param: string, value: string) => {
-  if (pageNumber.value) pageNumber.value = 0
-  router.push({
-    query: updateQueryParams(route.query, param, value)
-  })
-  getData()
+	if (pageNumber.value)
+		router.push({
+			query: updateQueryParams(route.query, param, value)
+		})
+	getData()
 }
 
 const setNewPageNumber = (number: number) => {
-  pageNumber.value = number - 1
-  router.push({ query: updateQueryParams(route.query, 'page', number.toString()) })
-  getData()
+	pageNumber.value = number - 1
+	router.push({ query: updateQueryParams(route.query, 'page', number.toString()) })
+	getData()
 }
 
 const removeError = () => {
-  errorOccured.value = false
+	errorOccured.value = false
 }
 </script>
 
 <template>
-  <main v-if="errorOccured" className="error-occured min-h-screen grid place-content-center grow">
-    <h2 className="text-3xl">Hello, I&apos;m Error! I was catched :&#40;</h2>
-    <button
-      type="button"
-      className="w-fit bg-lime-700 py-3 px-10 mt-10 rounded text-white font-extrabold m-auto"
-      @click="removeError"
-    >
-      Try again
-    </button>
-  </main>
-  <main v-else className="relative min-h-screen flex flex-col grow">
-    <section className="bg-lime-200 py-10">
-      <SearchForm v-model="searchValue" @submit-form="submitFromChangeLimit" />
-    </section>
-    <section className="search-results grow">
-      <DataLoader v-show="loading" />
-      <SelectLimit v-show="!loading" v-model="pageSize" @change-limit="submitFromChangeLimit" />
+	<main v-if="errorOccured" className="error-occured min-h-screen grid place-content-center grow">
+		<h2 className="text-3xl">Hello, I&apos;m Error! I was catched :&#40;</h2>
+		<button
+			type="button"
+			className="w-fit bg-lime-700 py-3 px-10 mt-10 rounded text-white font-extrabold m-auto"
+			@click="removeError"
+		>
+			Try again
+		</button>
+	</main>
+	<main v-else className="relative min-h-screen flex flex-col grow">
+		<section className="bg-lime-200 py-10">
+			<SearchForm v-model="searchValue" @submit-form="submitFromChangeLimit" />
+		</section>
+		<section className="search-results grow">
+			<DataLoader v-show="loading" />
+			<SelectLimit
+				v-show="!loading"
+				v-model="pageSize"
+				@change-limit="submitFromChangeLimit"
+			/>
 
-      <SearchResults v-show="!loading" :searchResultsArray="searchResultsArray" />
+			<SearchResults v-show="!loading" :searchResultsArray="searchResultsArray" />
 
-      <PaginationComponent
-        v-show="!loading"
-        v-if="totalPages"
-        :pageNumber="pageNumber"
-        :totalPages="totalPages"
-        @set-new-page-number="setNewPageNumber"
-      />
-    </section>
-  </main>
-  <router-view />
+			<PaginationComponent
+				v-show="!loading"
+				v-if="totalPages"
+				:pageNumber="pageNumber"
+				:totalPages="totalPages"
+				@set-new-page-number="setNewPageNumber"
+			/>
+		</section>
+	</main>
+	<router-view />
 </template>
